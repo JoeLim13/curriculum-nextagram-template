@@ -1,4 +1,9 @@
-from flask import Blueprint, render_template
+import peeweedbevolve # new; must be imported before models
+from flask import Blueprint, render_template, flash, redirect, url_for, request
+from models.user import User
+from flask_wtf.csrf import CSRFProtect
+
+csrf = CSRFProtect()
 
 
 users_blueprint = Blueprint('users',
@@ -12,8 +17,17 @@ def new():
 
 
 @users_blueprint.route('/', methods=['POST'])
+@csrf.exempt
 def create():
-    pass
+    user = User(username=request.form['username'],
+                password=request.form['password'],
+                email=request.form['email'])
+    if user.save():
+        flash("User has been succesfully added!")
+        return redirect(url_for('users.new'))
+    else:
+        return render_template('users/new.html', username=request.form['username'], errors=user.errors)
+    
 
 
 @users_blueprint.route('/<username>', methods=["GET"])
